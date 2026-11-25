@@ -47,6 +47,74 @@ detectar() {
   return 0
 }
 
+# Traductor al inglés (se añade al final del JS descargado)
+traductor() {
+cat <<'NEBULA_EN_EOF'
+
+/* Nebula — English translator companion */
+(function () {
+  if (document.getElementById('nebulaHeroTranslate')) return;
+  var marker = document.createElement('meta');
+  marker.id = 'nebulaHeroTranslate';
+  document.head.appendChild(marker);
+
+  function translateNebula(root) {
+    if (!root || !root.querySelectorAll) return;
+
+    // Translate Play & More Info buttons
+    root.querySelectorAll('.nbHero-btn').forEach(function (btn) {
+      btn.childNodes.forEach(function (node) {
+        if (node.nodeType === 3) {
+          node.nodeValue = node.nodeValue
+            .replace('Ver ahora', 'Watch now')
+            .replace('Más info', 'More info');
+        }
+      });
+    });
+
+    // Translate season counts ("1 temporada", "2 temporadas", "Serie")
+    root.querySelectorAll('.nbHero-meta span').forEach(function (span) {
+      span.textContent = span.textContent
+        .replace(/\btemporadas\b/g, 'Seasons')
+        .replace(/\btemporada\b/g, 'Season')
+        .replace(/^Serie$/, 'Series');
+    });
+
+    // Translate navigation accessibility labels
+    var prev = root.querySelector('.nbHero-prev');
+    var next = root.querySelector('.nbHero-next');
+    if (prev) prev.setAttribute('aria-label', 'Previous');
+    if (next) next.setAttribute('aria-label', 'Next');
+
+    root.querySelectorAll('.nbHero-dot').forEach(function (dot) {
+      var label = dot.getAttribute('aria-label');
+      if (label && label.indexOf('Ir a ') === 0) {
+        dot.setAttribute('aria-label', label.replace('Ir a ', 'Go to '));
+      }
+    });
+  }
+
+  new MutationObserver(function (mutations) {
+    mutations.forEach(function (m) {
+      m.addedNodes.forEach(function (node) {
+        if (node.nodeType === 1) {
+          if (node.classList && node.classList.contains('nbHero')) {
+            translateNebula(node);
+          } else if (node.querySelector) {
+            var hero = node.querySelector('.nbHero');
+            if (hero) translateNebula(hero);
+          }
+        }
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  var existing = document.querySelector('.nbHero');
+  if (existing) translateNebula(existing);
+})();
+NEBULA_EN_EOF
+}
+
 carrusel() {
   local TMP L R V; TMP="$(mktemp)"
   if x grep -q 'aurora-home.js' "$WEB/index.html" 2>/dev/null; then   # restos de la versión anterior (Aurora Glass)
@@ -153,3 +221,4 @@ if [ "$MODO" = "--cron" ] && [ $OK = 0 ]; then
 fi
 [ $OK = 0 ] && echo "Listo. Recarga la web con Ctrl+F5."
 exit $OK
+
