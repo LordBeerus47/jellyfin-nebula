@@ -121,6 +121,7 @@ carrusel() {
     x sed -i 's#<script defer src="aurora-home.js?v=[^"]*"></script>##' "$WEB/index.html"; x rm -f "$WEB/aurora-home.js"
   fi
   curl -fsSL "$REPO/$JS_SRC" -o "$TMP" || { echo "  ✗ No se pudo descargar el carrusel (¿hay internet?)"; rm -f "$TMP"; return 1; }
+  traductor >> "$TMP" 
   L=$(md5sum < "$TMP" | cut -c1-32)
   R=$(x md5sum "$WEB/$JS" 2>/dev/null | cut -c1-32)
   [ "$L" != "$R" ] && meter "$TMP" "$WEB/$JS" && echo "  ✓ Carrusel copiado"
